@@ -427,8 +427,8 @@ export default function AdminLeadsPage() {
                                                         {new Date(lead.createdAt).toLocaleDateString()}
                                                         <div className="opacity-75">{new Date(lead.createdAt).toLocaleTimeString()}</div>
                                                     </td>
-                                                    <td className="px-4 py-3">
-                                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1 ${
+                                                    <td className="px-2 py-2">
+                                                        <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold inline-flex items-center gap-1 ${
                                                             lead.type === 'custom_database' ? 'bg-purple-100 text-purple-700' :
                                                             lead.type === 'sample_request' ? 'bg-emerald-100 text-emerald-700' :
                                                             lead.type === 'purchase_attempt' ? 'bg-blue-100 text-blue-700' :
