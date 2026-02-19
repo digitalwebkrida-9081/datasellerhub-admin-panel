@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
         setLoading(true);
         setError('');
 
-        const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123';
+        const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'Dhavan@2911';
 
         if (password === correctPassword) {
             localStorage.setItem('admin_auth', 'true');

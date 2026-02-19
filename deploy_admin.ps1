@@ -19,7 +19,7 @@ ssh -t $Server "
     else
         echo 'Pulling latest changes...'
         cd admin-panel
-        git pull origin master
+        git pull origin main
     fi
 
     cd $RemotePath

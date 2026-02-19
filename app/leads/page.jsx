@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
-import { MdDelete, MdRefresh, MdSearch, MdFilterList, MdStorage, MdFileDownload, MdContentCopy, MdCheckCircle, MdTimeline, MdTrendingUp, MdChevronLeft, MdChevronRight } from 'react-icons/md';
+import { MdDelete, MdRefresh, MdSearch, MdFilterList, MdStorage, MdFileDownload, MdContentCopy, MdCheckCircle, MdTimeline, MdTrendingUp, MdChevronLeft, MdChevronRight, MdEdit, MdSave, MdClose } from 'react-icons/md';
 import { FaShoppingCart, FaFileAlt, FaDatabase, FaUsers } from 'react-icons/fa';
 
 const LEADS_PER_PAGE = 15;
@@ -31,6 +31,8 @@ export default function AdminLeadsPage() {
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [copiedEmail, setCopiedEmail] = useState(null);
     const [showTimeline, setShowTimeline] = useState(false);
+    const [editingNoteId, setEditingNoteId] = useState(null);
+    const [noteText, setNoteText] = useState('');
     const router = useRouter();
 
     useEffect(() => {
@@ -116,6 +118,40 @@ export default function AdminLeadsPage() {
         } catch (error) {
             console.error("Error updating status:", error);
         }
+    };
+
+    const handleSaveNote = async () => {
+        if (!editingNoteId) return;
+        try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+            // Assuming endpoint is /api/forms/:id/note
+            const res = await fetch(`${API_URL}/api/forms/${editingNoteId}/note`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ note: noteText })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setLeads(prev => prev.map(l => l._id === editingNoteId ? { ...l, note: noteText } : l));
+                setEditingNoteId(null);
+                setNoteText('');
+            } else {
+                alert('Failed to save note');
+            }
+        } catch (error) {
+            console.error("Error saving note:", error);
+            alert('Error saving note');
+        }
+    };
+
+    const startEditingNote = (lead) => {
+        setEditingNoteId(lead._id);
+        setNoteText(lead.note || '');
+    };
+
+    const cancelEditingNote = () => {
+        setEditingNoteId(null);
+        setNoteText('');
     };
 
     const copyEmail = (email) => {
@@ -363,6 +399,7 @@ export default function AdminLeadsPage() {
                                         <th className="px-4 py-3">Type</th>
                                         <th className="px-4 py-3">Contact</th>
                                         <th className="px-4 py-3">Details</th>
+                                        <th className="px-4 py-3">Notes</th>
                                         <th className="px-4 py-3">Status</th>
                                         <th className="px-4 py-3 text-right">Actions</th>
                                     </tr>
@@ -447,6 +484,39 @@ export default function AdminLeadsPage() {
                                                                         {lead.datasetDetails.name || `List Of ${category} in ${location}`}
                                                                     </div>
                                                                 )}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-3 min-w-50">
+                                                        {editingNoteId === lead._id ? (
+                                                            <div className="flex flex-col gap-2">
+                                                                <textarea
+                                                                    value={noteText}
+                                                                    onChange={(e) => setNoteText(e.target.value)}
+                                                                    className="w-full text-xs border border-blue-300 rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                                    rows="3"
+                                                                    autoFocus
+                                                                />
+                                                                <div className="flex justify-end gap-1">
+                                                                    <button onClick={cancelEditingNote} className="p-1 text-slate-400 hover:text-slate-600 rounded">
+                                                                        <MdClose size={16} />
+                                                                    </button>
+                                                                    <button onClick={handleSaveNote} className="p-1 text-blue-600 hover:text-blue-800 rounded">
+                                                                        <MdSave size={16} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="group/note relative">
+                                                                <p className="text-xs text-slate-600 whitespace-pre-wrap max-h-20 overflow-y-auto">
+                                                                    {lead.note || <span className="text-slate-400 italic">No notes</span>}
+                                                                </p>
+                                                                <button
+                                                                    onClick={() => startEditingNote(lead)}
+                                                                    className="absolute top-0 right-0 p-1 text-slate-300 hover:text-blue-600 opacity-0 group-hover/note:opacity-100 transition"
+                                                                >
+                                                                    <MdEdit size={14} />
+                                                                </button>
                                                             </div>
                                                         )}
                                                     </td>
