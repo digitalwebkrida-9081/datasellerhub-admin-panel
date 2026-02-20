@@ -42,6 +42,7 @@ export default function AdminLeadsPage() {
     const [showTimeline, setShowTimeline] = useState(false);
     const [editingNoteId, setEditingNoteId] = useState(null);
     const [noteText, setNoteText] = useState('');
+    const [userRole, setUserRole] = useState('admin');
     const router = useRouter();
 
     useEffect(() => {
@@ -49,6 +50,9 @@ export default function AdminLeadsPage() {
         if (typeof window !== 'undefined' && window.innerWidth >= 1280) {
             setShowTimeline(true);
         }
+
+        const role = localStorage.getItem('user_role') || 'admin';
+        setUserRole(role);
 
         const isAuth = localStorage.getItem('admin_auth');
         if (!isAuth) {
@@ -308,13 +312,13 @@ export default function AdminLeadsPage() {
                             />
                             <MdSearch className="absolute left-3.5 top-3 text-slate-400" size={18} />
                         </div>
-                        <button onClick={() => setShowTimeline(!showTimeline)} className={`border px-4 py-2.5 rounded-xl flex items-center gap-2 font-medium text-sm transition ${showTimeline ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm'}`}>
+                        <button onClick={() => setShowTimeline(!showTimeline)} className={`border px-4 py-2.5 rounded-xl flex items-center gap-2 font-medium text-sm transition ${showTimeline ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm'} cursor-pointer`}>
                             <MdTimeline size={18} /> <span className="hidden sm:inline">Timeline</span>
                         </button>
-                        <button onClick={exportCSV} disabled={filteredLeads.length === 0} className="bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl hover:bg-slate-50 transition flex items-center gap-2 font-medium text-sm shadow-sm disabled:opacity-50">
+                        <button onClick={exportCSV} disabled={filteredLeads.length === 0} className="bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl hover:bg-slate-50 transition flex items-center gap-2 font-medium text-sm shadow-sm disabled:opacity-50 cursor-pointer">
                             <MdFileDownload size={18} /> <span className="hidden sm:inline">Export</span>
                         </button>
-                        <button onClick={fetchLeads} className="bg-white border border-slate-200 text-slate-600 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition flex items-center gap-2 font-medium text-sm shadow-sm group">
+                        <button onClick={fetchLeads} className="bg-white border border-slate-200 text-slate-600 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition flex items-center gap-2 font-medium text-sm shadow-sm group cursor-pointer">
                             <MdRefresh size={20} className="group-hover:rotate-180 transition-transform duration-500" />
                         </button>
                     </div>
@@ -369,9 +373,11 @@ export default function AdminLeadsPage() {
                                 <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-2 w-full sm:w-auto animate-in fade-in slide-in-from-top-2">
                                     <span className="text-sm font-semibold text-indigo-700">{selectedIds.size} selected</span>
                                     <div className="h-4 w-px bg-indigo-200"></div>
-                                    <button onClick={handleBulkDelete} className="text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-1.5 transition">
-                                        <MdDelete size={16} /> <span className="hidden sm:inline">Delete</span>
-                                    </button>
+                                    {userRole === 'admin' && (
+                                        <button onClick={handleBulkDelete} className="text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-1.5 transition">
+                                            <MdDelete size={16} /> <span className="hidden sm:inline">Delete</span>
+                                        </button>
+                                    )}
                                     <button onClick={() => {
                                         const emails = leads.filter(l => selectedIds.has(l._id)).map(l => l.email).join(', ');
                                         navigator.clipboard.writeText(emails);
@@ -527,18 +533,20 @@ export default function AdminLeadsPage() {
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-4 text-end">
-                                                            <button
-                                                                onClick={() => handleDelete(lead._id)}
-                                                                disabled={deletingId === lead._id}
-                                                                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 disabled:opacity-50"
-                                                                title="Delete Lead"
-                                                            >
-                                                                {deletingId === lead._id ? (
-                                                                    <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-                                                                ) : (
-                                                                    <MdDelete size={18} />
-                                                                )}
-                                                            </button>
+                                                            {userRole === 'admin' && (
+                                                                <button
+                                                                    onClick={() => handleDelete(lead._id)}
+                                                                    disabled={deletingId === lead._id}
+                                                                    className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 disabled:opacity-50"
+                                                                    title="Delete Lead"
+                                                                >
+                                                                    {deletingId === lead._id ? (
+                                                                        <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                                                                    ) : (
+                                                                        <MdDelete size={18} />
+                                                                    )}
+                                                                </button>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 );

@@ -20,8 +20,15 @@ export default function OverviewPage() {
     // Fetch on page or search change
     useEffect(() => {
         const isAuth = localStorage.getItem('admin_auth');
+        const role = localStorage.getItem('user_role');
+
         if (!isAuth) {
             router.push('/login');
+            return;
+        }
+
+        if (role !== 'admin') {
+            router.push('/sales-dashboard'); // Redirect sales away from here
             return;
         }
 
@@ -74,7 +81,7 @@ export default function OverviewPage() {
                 </div>
                 <button 
                     onClick={() => fetchOverview(page, searchTerm)} 
-                    className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition flex items-center gap-2 font-medium"
+                    className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition flex items-center gap-2 font-medium cursor-pointer"
                 >
                     <MdRefresh size={20} />
                     Refresh Stats

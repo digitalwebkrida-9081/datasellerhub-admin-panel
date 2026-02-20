@@ -92,8 +92,15 @@ export default function B2BDataPage() {
 
     useEffect(() => {
         const isAuth = localStorage.getItem('admin_auth');
+        const role = localStorage.getItem('user_role');
+
         if (!isAuth) {
             router.push('/login');
+            return;
+        }
+
+        if (role !== 'admin') {
+            router.push('/sales-dashboard'); // Redirect sales away from here
             return;
         }
 
@@ -311,7 +318,7 @@ export default function B2BDataPage() {
                 <div className="flex gap-3">
                     <button 
                         onClick={fetchLeads} 
-                        className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition flex items-center gap-2 font-medium"
+                        className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition flex items-center gap-2 font-medium cursor-pointer"
                     >
                         <MdRefresh size={20} />
                         Refresh
@@ -328,7 +335,7 @@ export default function B2BDataPage() {
                     {filters.country && filters.category && (
                         <button 
                             onClick={handleBulkUpdate}
-                            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition flex items-center gap-2 font-medium shadow-sm"
+                            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition flex items-center gap-2 font-medium shadow-sm cursor-pointer"
                         >
                             <MdEdit size={20} />
                             Bulk Update Price
