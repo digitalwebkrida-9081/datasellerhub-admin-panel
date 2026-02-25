@@ -11,7 +11,7 @@ export default function OverviewPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const limit = 20;
-    
+
     // Reset page on search
     useEffect(() => {
         setPage(1);
@@ -79,8 +79,8 @@ export default function OverviewPage() {
                     <h1 className="text-3xl font-bold text-slate-800">Data Overview</h1>
                     <p className="text-slate-500 mt-1">Comprehensive statistics of your B2B database</p>
                 </div>
-                <button 
-                    onClick={() => fetchOverview(page, searchTerm)} 
+                <button
+                    onClick={() => fetchOverview(page, searchTerm)}
                     className="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition flex items-center gap-2 font-medium cursor-pointer"
                 >
                     <MdRefresh size={20} />
@@ -90,28 +90,28 @@ export default function OverviewPage() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <SummaryCard 
-                    title="Total Records" 
-                    value={data?.summary?.totalRecords?.toLocaleString()} 
-                    icon={<MdStorage className="text-blue-600" size={24} />} 
+                <SummaryCard
+                    title="Total Records"
+                    value={data?.summary?.totalRecords?.toLocaleString()}
+                    icon={<MdStorage className="text-blue-600" size={24} />}
                     color="blue"
                 />
-                <SummaryCard 
-                    title="Total Emails" 
-                    value={data?.summary?.totalEmails?.toLocaleString()} 
-                    icon={<MdEmail className="text-emerald-600" size={24} />} 
+                <SummaryCard
+                    title="Total Emails"
+                    value={data?.summary?.totalEmails?.toLocaleString()}
+                    icon={<MdEmail className="text-emerald-600" size={24} />}
                     color="emerald"
                 />
-                <SummaryCard 
-                    title="Total Phones" 
-                    value={data?.summary?.totalPhones?.toLocaleString()} 
-                    icon={<MdPhone className="text-purple-600" size={24} />} 
+                <SummaryCard
+                    title="Total Phones"
+                    value={data?.summary?.totalPhones?.toLocaleString()}
+                    icon={<MdPhone className="text-purple-600" size={24} />}
                     color="purple"
                 />
-                <SummaryCard 
-                    title="Unique Locations" 
-                    value={data?.summary?.uniqueLocations?.toLocaleString()} 
-                    icon={<MdLocationOn className="text-orange-600" size={24} />} 
+                <SummaryCard
+                    title="Unique Locations"
+                    value={data?.summary?.uniqueLocations?.toLocaleString()}
+                    icon={<MdLocationOn className="text-orange-600" size={24} />}
                     color="orange"
                 />
             </div>
@@ -121,9 +121,9 @@ export default function OverviewPage() {
                 <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
                     <h2 className="text-lg font-bold text-slate-700">Database Breakdown</h2>
                     <div className="relative">
-                        <input 
-                            type="text" 
-                            placeholder="Filter by Category or Location..." 
+                        <input
+                            type="text"
+                            placeholder="Filter by Category or Location..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-72"
@@ -189,9 +189,9 @@ export default function OverviewPage() {
                             Showing {(page - 1) * limit + 1}-{Math.min(page * limit, data?.pagination?.total)} of {data?.pagination?.total}
                         </p>
                         <div className="flex items-center gap-1">
-                            <button 
-                                onClick={() => handlePageChange(Math.max(1, page - 1))} 
-                                disabled={page === 1} 
+                            <button
+                                onClick={() => handlePageChange(Math.max(1, page - 1))}
+                                disabled={page === 1}
                                 className="p-1.5 rounded-md hover:bg-slate-200 disabled:opacity-30 transition"
                             >
                                 <MdChevronLeft size={20} />
@@ -203,18 +203,18 @@ export default function OverviewPage() {
                                 else if (page >= totalPages - 2) pageNum = totalPages - 4 + i;
                                 else pageNum = page - 2 + i;
                                 return (
-                                    <button 
-                                        key={pageNum} 
-                                        onClick={() => handlePageChange(pageNum)} 
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => handlePageChange(pageNum)}
                                         className={`w-8 h-8 rounded-md text-sm font-medium transition ${page === pageNum ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-200'}`}
                                     >
                                         {pageNum}
                                     </button>
                                 );
                             })}
-                            <button 
-                                onClick={() => handlePageChange(Math.min(totalPages, page + 1))} 
-                                disabled={page === totalPages} 
+                            <button
+                                onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
+                                disabled={page === totalPages}
                                 className="p-1.5 rounded-md hover:bg-slate-200 disabled:opacity-30 transition"
                             >
                                 <MdChevronRight size={20} />

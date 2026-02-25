@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { MdDashboard, MdEmail, MdSettings, MdLogout, MdStorage, MdClose, MdViewKanban } from 'react-icons/md';
+import { MdDashboard, MdEmail, MdSettings, MdLogout, MdStorage, MdClose, MdViewKanban, MdPublic } from 'react-icons/md';
 
 export default function Sidebar({ isOpen, onClose }) {
     const pathname = usePathname();
@@ -108,6 +108,15 @@ export default function Sidebar({ isOpen, onClose }) {
                         >
                             <MdStorage size={20} />
                             <span className="font-medium">B2B Database</span>
+                        </Link>
+
+                        <Link 
+                            href="/scraped-data" 
+                            onClick={onClose}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive('/scraped-data') ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400'}`}
+                        >
+                            <MdPublic size={20} />
+                            <span className="font-medium">Scraped Data</span>
                         </Link>
 
                         <Link 
