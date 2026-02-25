@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
 import { MdRefresh, MdSearch, MdFilterList, MdStorage, MdPublic, MdCategory, MdChevronLeft, MdChevronRight, MdFileDownload, MdVisibility, MdClose, MdExpandMore } from 'react-icons/md';
 
-const DATA_API_URL = 'http://51.210.109.205:7070';
+const DATA_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export default function ScrapedDataPage() {
     const router = useRouter();
