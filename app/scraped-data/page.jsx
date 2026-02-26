@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
-import { MdRefresh, MdSearch, MdFilterList, MdStorage, MdPublic, MdCategory, MdChevronLeft, MdChevronRight, MdFileDownload, MdVisibility, MdClose, MdExpandMore } from 'react-icons/md';
+import { MdRefresh, MdSearch, MdFilterList, MdStorage, MdPublic, MdCategory, MdChevronLeft, MdChevronRight, MdFileDownload, MdVisibility, MdClose, MdExpandMore, MdEmail, MdPhone, MdLanguage } from 'react-icons/md';
 
 const DATA_API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -127,7 +127,7 @@ export default function ScrapedDataPage() {
 
             {/* Stats Cards */}
             {stats && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
                     <StatsCard
                         title="Countries"
                         value={stats.summary.totalCountries}
@@ -145,6 +145,24 @@ export default function ScrapedDataPage() {
                         value={stats.summary.totalRecords?.toLocaleString()}
                         icon={<MdStorage className="text-purple-600" size={24} />}
                         color="purple"
+                    />
+                    <StatsCard
+                        title="Emails"
+                        value={stats.summary.totalEmails?.toLocaleString()}
+                        icon={<MdEmail className="text-teal-600" size={24} />}
+                        color="teal"
+                    />
+                    <StatsCard
+                        title="Phones"
+                        value={stats.summary.totalPhones?.toLocaleString()}
+                        icon={<MdPhone className="text-indigo-600" size={24} />}
+                        color="indigo"
+                    />
+                    <StatsCard
+                        title="Websites"
+                        value={stats.summary.totalWebsites?.toLocaleString()}
+                        icon={<MdLanguage className="text-orange-600" size={24} />}
+                        color="orange"
                     />
                 </div>
             )}

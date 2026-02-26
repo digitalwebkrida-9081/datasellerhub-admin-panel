@@ -120,6 +120,15 @@ export default function Sidebar({ isOpen, onClose }) {
                         </Link>
 
                         <Link 
+                            href="/merged-data" 
+                            onClick={onClose}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive('/merged-data') ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400'}`}
+                        >
+                            <MdStorage size={20} />
+                            <span className="font-medium">Merged Data</span>
+                        </Link>
+
+                        <Link 
                             href="/team" 
                             onClick={onClose}
                             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive('/team') ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400'}`}
