@@ -33,6 +33,16 @@ export default function AllDataPage() {
     const [dataLoading, setDataLoading] = useState(false);
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewRow, setPreviewRow] = useState(null);
+    const [categorySearch, setCategorySearch] = useState('');
+    const [filePreviewOpen, setFilePreviewOpen] = useState(false);
+    const [filePreviewData, setFilePreviewData] = useState(null);
+    const [filePreviewName, setFilePreviewName] = useState('');
+    const [filePreviewLoading, setFilePreviewLoading] = useState(false);
+    const [filePreviewMeta, setFilePreviewMeta] = useState(null);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editData, setEditData] = useState({ category: '', price: '', previousPrice: '' });
+    const [bulkModalOpen, setBulkModalOpen] = useState(false);
+    const [bulkData, setBulkData] = useState({ price: '', previousPrice: '' });
 
     // --- B2B DATA STATE ---
     const [b2bLeads, setB2bLeads] = useState([]);
@@ -91,12 +101,19 @@ export default function AllDataPage() {
         setCategoriesLoading(true);
         setSelectedCategory('');
         setScrapedData([]);
-        fetch(`${API_URL}/api/merged/categories?country=${selectedCountry}`)
+        setCategorySearch('');
+        fetch(`${API_URL}/api/merged/categories?country=${selectedCountry}&limit=9999`)
             .then(res => res.json())
             .then(json => { if (json.success) setCategories(json.data.categories); })
             .catch(err => console.error('Error:', err))
             .finally(() => setCategoriesLoading(false));
     }, [selectedCountry]);
+
+    const filteredCategories = React.useMemo(() => {
+        if (!categorySearch.trim()) return categories;
+        const lower = categorySearch.toLowerCase();
+        return categories.filter(cat => cat.displayName.toLowerCase().includes(lower) || cat.name.toLowerCase().includes(lower));
+    }, [categories, categorySearch]);
 
     useEffect(() => {
         if (!selectedCountry || !selectedCategory) return;
@@ -121,6 +138,59 @@ export default function AllDataPage() {
             }
         } catch (err) { console.error('Error fetching data:', err); }
         finally { setDataLoading(false); }
+    };
+
+    const handleFilePreview = async (categoryName, meta = null) => {
+        setFilePreviewName(categoryName);
+        setFilePreviewOpen(true);
+        setFilePreviewLoading(true);
+        setFilePreviewData(null);
+        setFilePreviewMeta(meta);
+        try {
+            const params = new URLSearchParams({ country: selectedCountry, category: categoryName });
+            const res = await fetch(`${API_URL}/api/merged/preview?${params}`);
+            const json = await res.json();
+            if (json.success) setFilePreviewData(json.data);
+        } catch (err) { console.error('Error fetching preview:', err); }
+        finally { setFilePreviewLoading(false); }
+    };
+
+    const handleEditPrice = (cat) => {
+        setEditData({ category: cat.name, price: cat.price ? cat.price.replace('$', '') : '', previousPrice: cat.previousPrice ? cat.previousPrice.replace('$', '') : '' });
+        setEditModalOpen(true);
+    };
+
+    const savePrice = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/merged/update-price`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ country: selectedCountry, category: editData.category, price: `$${editData.price}`, previousPrice: editData.previousPrice ? `$${editData.previousPrice}` : undefined })
+            });
+            const json = await res.json();
+            if (json.success) {
+                setEditModalOpen(false);
+                fetch(`${API_URL}/api/merged/categories?country=${selectedCountry}&limit=9999`)
+                    .then(r => r.json()).then(j => { if (j.success) setCategories(j.data.categories); });
+            } else alert('Failed: ' + json.message);
+        } catch (err) { alert('Error saving price'); }
+    };
+
+    const handleBulkUpdate = () => { setBulkData({ price: '', previousPrice: '' }); setBulkModalOpen(true); };
+
+    const saveBulkPrice = async () => {
+        if (!confirm(`Update price for ALL categories in ${selectedCountry}?`)) return;
+        try {
+            const res = await fetch(`${API_URL}/api/merged/bulk-update-price`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ country: selectedCountry, price: `$${bulkData.price}`, previousPrice: bulkData.previousPrice ? `$${bulkData.previousPrice}` : undefined })
+            });
+            const json = await res.json();
+            if (json.success) {
+                alert(json.message); setBulkModalOpen(false);
+                fetch(`${API_URL}/api/merged/categories?country=${selectedCountry}&limit=9999`)
+                    .then(r => r.json()).then(j => { if (j.success) setCategories(j.data.categories); });
+            } else alert('Failed: ' + json.message);
+        } catch (err) { alert('Error bulk updating price'); }
     };
 
     // ==========================================
@@ -408,6 +478,11 @@ export default function AllDataPage() {
                                 )}
                             </div>
 
+                            <div className="flex justify-end mb-4">
+                                <button onClick={handleBulkUpdate} className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition flex items-center gap-2 font-medium cursor-pointer shadow-sm text-sm">
+                                    <MdEdit size={16} /> Bulk Update Price
+                                </button>
+                            </div>
                             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-5 grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="relative">
                                     <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">Category</label>
@@ -418,14 +493,23 @@ export default function AllDataPage() {
                                         className="w-full pl-3 pr-8 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white appearance-none disabled:bg-slate-100"
                                     >
                                         <option value="">Select Category... ({categories.length} available)</option>
-                                        {categories.map(cat => (
-                                            <option key={cat.name} value={cat.name}>{cat.displayName} ({cat.fileSizeFormatted})</option>
+                                        {filteredCategories.map(cat => (
+                                            <option key={cat.name} value={cat.name}>{cat.displayName} ({cat.records?.toLocaleString()} • {cat.fileSizeFormatted})</option>
                                         ))}
                                     </select>
                                     <div className="absolute right-3 top-[2.1rem] pointer-events-none text-slate-500"><MdExpandMore size={16} /></div>
                                 </div>
-                                <div className="relative md:col-span-2">
-                                    <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">Search</label>
+                                <div className="relative">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">Filter Categories</label>
+                                    <div className="relative">
+                                        <input type="text" placeholder="Filter categories..." value={categorySearch} onChange={(e) => setCategorySearch(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                        />
+                                        <MdSearch className="absolute left-3 top-2.5 text-slate-400" size={18} />
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">Search Records</label>
                                     <div className="relative">
                                         <input type="text" placeholder="Search within data..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} disabled={!selectedCategory}
                                             className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm disabled:bg-slate-100"
@@ -435,18 +519,50 @@ export default function AllDataPage() {
                                 </div>
                             </div>
 
-                            {!selectedCategory && categories.length > 0 && (
-                                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-                                    <h2 className="text-base font-bold text-slate-700 mb-3">Available Categories ({categories.length})</h2>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-[400px] overflow-y-auto">
-                                        {categories.map(cat => (
-                                            <button key={cat.name} onClick={() => setSelectedCategory(cat.name)}
-                                                className="text-left p-2.5 rounded-lg border border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 transition group"
-                                            >
-                                                <p className="font-medium text-sm text-slate-700 group-hover:text-blue-600 truncate">{cat.displayName}</p>
-                                                <p className="text-xs text-slate-400 mt-0.5">{cat.fileSizeFormatted}</p>
-                                            </button>
-                                        ))}
+                            {!selectedCategory && filteredCategories.length > 0 && (
+                                <div className="bg-white shadow-xl rounded-xl overflow-hidden border border-slate-200 mb-6">
+                                    <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                                        <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide">All Datasets ({filteredCategories.length})</h2>
+                                    </div>
+                                    <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
+                                        <table className="w-full text-left text-sm text-slate-600">
+                                            <thead className="bg-slate-50 text-xs uppercase font-bold text-slate-500 tracking-wider sticky top-0 z-10">
+                                                <tr className="border-b border-slate-100">
+                                                    <th className="px-5 py-3">Category</th>
+                                                    <th className="px-5 py-3 text-right">Records</th>
+                                                    <th className="px-5 py-3 text-right">Size</th>
+                                                    <th className="px-5 py-3">Price</th>
+                                                    <th className="px-5 py-3 text-right">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {filteredCategories.map((cat, idx) => (
+                                                    <tr key={idx} className="hover:bg-blue-50/30 transition group">
+                                                        <td className="px-5 py-3">
+                                                            <button onClick={() => setSelectedCategory(cat.name)} className="text-left cursor-pointer group/name">
+                                                                <span className="font-semibold text-slate-800 group-hover/name:text-blue-600 block">{cat.displayName}</span>
+                                                                <span className="text-[11px] text-slate-400 font-mono">{cat.fileName}</span>
+                                                            </button>
+                                                        </td>
+                                                        <td className="px-5 py-3 text-right font-bold text-slate-700">{cat.records?.toLocaleString()}</td>
+                                                        <td className="px-5 py-3 text-right text-slate-400 text-xs font-mono">{cat.fileSizeFormatted}</td>
+                                                        <td className="px-5 py-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`font-semibold ${cat.price ? 'text-emerald-600' : 'text-slate-300'}`}>{cat.price || 'Not set'}</span>
+                                                                <button onClick={() => handleEditPrice(cat)} className="text-slate-400 hover:text-blue-600 transition p-1 rounded hover:bg-slate-100 cursor-pointer"><MdEdit size={14} /></button>
+                                                            </div>
+                                                            {cat.previousPrice && <span className="text-xs text-slate-400 line-through">{cat.previousPrice}</span>}
+                                                        </td>
+                                                        <td className="px-5 py-3 text-right">
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                <button onClick={() => handleFilePreview(cat.name, cat)} className="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer">Preview</button>
+                                                                <button onClick={() => setSelectedCategory(cat.name)} className="text-blue-600 hover:bg-blue-50 px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer">Open</button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             )}
@@ -618,6 +734,52 @@ export default function AllDataPage() {
                 </div>
             )}
 
+            {/* File Preview + Verification Modal */}
+            {filePreviewOpen && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+                        <div className="p-5 border-b border-slate-100 flex justify-between items-center">
+                            <div><h2 className="text-lg font-bold text-slate-800">📄 {formatColumnName(filePreviewName)}</h2></div>
+                            <button onClick={() => setFilePreviewOpen(false)} className="text-slate-400 hover:text-slate-600"><MdClose size={24} /></button>
+                        </div>
+                        {filePreviewMeta && (
+                            <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 text-xs">
+                                <span className="font-semibold text-slate-600">{filePreviewMeta.records?.toLocaleString()} records</span>
+                                <span className="mx-2 text-slate-300">|</span>
+                                <span className="text-slate-500">{filePreviewMeta.fileSizeFormatted} • CSV</span>
+                                {filePreviewMeta.price && (<><span className="mx-2 text-slate-300">|</span><span className="font-semibold text-emerald-600">Price: {filePreviewMeta.price}</span></>)}
+                            </div>
+                        )}
+                        <div className="flex-1 overflow-auto p-4">
+                            {filePreviewLoading ? (
+                                <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+                            ) : filePreviewData ? (
+                                <table className="w-full text-left text-xs text-slate-600">
+                                    <thead className="bg-slate-50 font-bold text-slate-500 sticky top-0">
+                                        <tr className="border-b border-slate-100">
+                                            {(filePreviewData.columns || []).slice(0, 8).map(col => (<th key={col} className="px-3 py-2 whitespace-nowrap">{formatColumnName(col)}</th>))}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {(filePreviewData.rows || []).map((row, i) => (
+                                            <tr key={i} className="hover:bg-slate-50">
+                                                {(filePreviewData.columns || []).slice(0, 8).map(col => (
+                                                    <td key={col} className="px-3 py-2 max-w-[200px] truncate">{row[col] || '-'}</td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (<p className="text-center text-slate-400 py-12">No data</p>)}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Price Edit Modals */}
+            <PriceEditModal isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} title={`Edit Price: ${formatColumnName(editData.category)}`} data={editData} setData={setEditData} onSave={savePrice} />
+            <PriceEditModal isOpen={bulkModalOpen} onClose={() => setBulkModalOpen(false)} title={`Bulk Update Price — ${selectedCountry}`} data={bulkData} setData={setBulkData} onSave={saveBulkPrice} />
+
             {/* B2B Preview Modal */}
             {b2bPreviewOpen && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -722,6 +884,31 @@ function PaginationBar({ page, setPage, totalPages, total, limit }) {
                 <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1.5 rounded-md hover:bg-slate-200 disabled:opacity-30 transition">
                     <MdChevronRight size={20} />
                 </button>
+            </div>
+        </div>
+    );
+}
+
+function PriceEditModal({ isOpen, onClose, title, data, setData, onSave }) {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+                <h2 className="text-lg font-bold text-slate-800 mb-4">{title}</h2>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Price ($)</label>
+                        <input type="number" value={data.price} onChange={e => setData({ ...data, price: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="299" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Previous Price ($) <span className="text-slate-400 font-normal">(Optional)</span></label>
+                        <input type="number" value={data.previousPrice} onChange={e => setData({ ...data, previousPrice: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="598" />
+                    </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                    <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium cursor-pointer">Cancel</button>
+                    <button onClick={onSave} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium cursor-pointer">Save Changes</button>
+                </div>
             </div>
         </div>
     );

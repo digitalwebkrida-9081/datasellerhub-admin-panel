@@ -125,7 +125,7 @@ export default function Sidebar({ isOpen, onClose }) {
                             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive('/scraped-data') ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400'}`}
                         >
                             <MdPublic size={20} />
-                            <span className="font-medium">Scraped Data</span>
+                            <span className="font-medium">CSV Data Manager</span>
                         </Link>
 
                         <Link 
