@@ -111,6 +111,15 @@ export default function Sidebar({ isOpen, onClose }) {
                         </Link>
 
                         <Link 
+                            href="/all-data" 
+                            onClick={onClose}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive('/all-data') ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400'}`}
+                        >
+                            <MdStorage size={20} />
+                            <span className="font-medium">All Datasets (Unified)</span>
+                        </Link>
+
+                        <Link 
                             href="/scraped-data" 
                             onClick={onClose}
                             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive('/scraped-data') ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400'}`}
