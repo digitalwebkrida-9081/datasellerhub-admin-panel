@@ -119,16 +119,6 @@ export default function OverviewPage() {
                 />
             </div>
 
-            {/* Secondary Stats - Social Media */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-                <MiniCard title="LinkedIn" value={summary.totalLinkedin?.toLocaleString()} icon={<FaLinkedin className="text-blue-700" />} />
-                <MiniCard title="Facebook" value={summary.totalFacebook?.toLocaleString()} icon={<FaFacebook className="text-blue-600" />} />
-                <MiniCard title="Instagram" value={summary.totalInstagram?.toLocaleString()} icon={<FaInstagram className="text-pink-600" />} />
-                <MiniCard title="Twitter/X" value={summary.totalTwitter?.toLocaleString()} icon={<FaXTwitter className="text-slate-800" />} />
-                <MiniCard title="TikTok" value={summary.totalTiktok?.toLocaleString()} icon={<FaTiktok className="text-slate-800" />} />
-                <MiniCard title="YouTube" value={summary.totalYoutube?.toLocaleString()} icon={<FaYoutube className="text-red-600" />} />
-            </div>
-
             {/* Meta Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <SummaryCard

@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-
     "mongoose": "^9.1.2",
     "next": "16.0.8",
     "react": "19.2.1",

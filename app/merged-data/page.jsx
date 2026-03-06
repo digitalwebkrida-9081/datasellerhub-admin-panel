@@ -2,7 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
-import { MdRefresh, MdChevronRight, MdStorage, MdEmail, MdPhone, MdLanguage, MdEdit, MdVisibility, MdClose, MdFolder, MdArrowBack, MdCategory } from 'react-icons/md';
+import { MdRefresh, MdChevronRight, MdStorage, MdEmail, MdPhone, MdLanguage, MdEdit, MdVisibility, MdClose, MdFolder, MdArrowBack, MdCategory, MdDownload } from 'react-icons/md';
+import * as XLSX from 'xlsx';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -15,12 +16,16 @@ export default function MergedDataPage() {
     const [country, setCountry] = useState('');
     const [state, setState] = useState('');
     const [city, setCity] = useState('');
+    const [browsePage, setBrowsePage] = useState(1);
+    const [browseSearch, setBrowseSearch] = useState('');
     
     // Preview modal
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewData, setPreviewData] = useState(null);
     const [previewName, setPreviewName] = useState('');
     const [previewLoading, setPreviewLoading] = useState(false);
+    const [previewPage, setPreviewPage] = useState(1);
+    const [previewSearch, setPreviewSearch] = useState('');
     
     // Price edit modal
     const [editModalOpen, setEditModalOpen] = useState(false);
@@ -42,13 +47,16 @@ export default function MergedDataPage() {
         fetchBrowse();
     }, [country, state, city]);
 
-    const fetchBrowse = async () => {
+    const fetchBrowse = async (page = browsePage, search = browseSearch) => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
             if (country) params.append('country', country);
             if (state) params.append('state', state);
             if (city) params.append('city', city);
+            params.append('page', page);
+            params.append('limit', 50);
+            if (search) params.append('search', search);
             
             const res = await fetch(`${API_URL}/api/merged/browse?${params}`);
             const json = await res.json();
@@ -60,7 +68,20 @@ export default function MergedDataPage() {
         }
     };
 
+    const handleBrowsePageChange = (newPage) => {
+        setBrowsePage(newPage);
+        fetchBrowse(newPage, browseSearch);
+    };
+
+    const handleBrowseSearch = (e) => {
+        e.preventDefault();
+        setBrowsePage(1);
+        fetchBrowse(1, browseSearch);
+    };
+
     const handleFolderClick = (folderName) => {
+        setBrowsePage(1);
+        setBrowseSearch('');
         if (!country) {
             setCountry(folderName);
             setState('');
@@ -74,6 +95,8 @@ export default function MergedDataPage() {
     };
 
     const handleBreadcrumbClick = (level) => {
+        setBrowsePage(1);
+        setBrowseSearch('');
         if (level === 'root') {
             setCountry('');
             setState('');
@@ -87,27 +110,73 @@ export default function MergedDataPage() {
     };
 
     const handleGoBack = () => {
+        setBrowsePage(1);
+        setBrowseSearch('');
         if (city) setCity('');
         else if (state) setState('');
         else if (country) setCountry('');
     };
 
-    // Preview
-    const handlePreview = async (categoryName) => {
+    // Preview mapping to paginated data
+    const handlePreview = (categoryName) => {
         setPreviewName(categoryName);
+        setPreviewPage(1);
+        setPreviewSearch('');
         setPreviewOpen(true);
+        fetchPreviewData(categoryName, 1, '');
+    };
+
+    const fetchPreviewData = async (catName, page, searchStr) => {
         setPreviewLoading(true);
-        setPreviewData(null);
         try {
-            const params = new URLSearchParams({ country, category: categoryName });
+            const params = new URLSearchParams({ country, category: catName, page, limit: 100 });
             if (state) params.append('state', state);
             if (city) params.append('city', city);
+            if (searchStr) params.append('search', searchStr);
             
-            const res = await fetch(`${API_URL}/api/merged/preview?${params}`);
+            const res = await fetch(`${API_URL}/api/merged/data?${params}`);
             const json = await res.json();
             if (json.success) setPreviewData(json.data);
         } catch (err) {
-            console.error('Error fetching preview:', err);
+            console.error('Error fetching preview data:', err);
+        } finally {
+            setPreviewLoading(false);
+        }
+    };
+
+    const handlePreviewPageChange = (newPage) => {
+        setPreviewPage(newPage);
+        fetchPreviewData(previewName, newPage, previewSearch);
+    };
+
+    const handlePreviewSearch = (e) => {
+        e.preventDefault();
+        setPreviewPage(1);
+        fetchPreviewData(previewName, 1, previewSearch);
+    };
+
+    const handleExport = async () => {
+        try {
+            setPreviewLoading(true);
+            const params = new URLSearchParams({ country, category: previewName, page: 1, limit: 1000000 }); // Large limit to get all data
+            if (state) params.append('state', state);
+            if (city) params.append('city', city);
+            if (previewSearch) params.append('search', previewSearch);
+            
+            const res = await fetch(`${API_URL}/api/merged/data?${params}`);
+            const json = await res.json();
+            
+            if (json.success && json.data?.data?.length > 0) {
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(json.data.data);
+                XLSX.utils.book_append_sheet(wb, ws, 'Exported Data');
+                XLSX.writeFile(wb, `${previewName}-${country}${state ? `-${state}` : ''}${city ? `-${city}` : ''}.xlsx`);
+            } else {
+                alert("No data found to export.");
+            }
+        } catch (error) {
+            console.error("Export error:", error);
+            alert("Error exporting data.");
         } finally {
             setPreviewLoading(false);
         }
@@ -196,7 +265,7 @@ export default function MergedDataPage() {
         </AdminLayout>
     );
 
-    const { breadcrumb = [], folders = [], categories = [], summary = {} } = browseData || {};
+    const { breadcrumb = [], folders = [], categories = [], summary = {}, pagination } = browseData || {};
 
     return (
         <AdminLayout>
@@ -284,14 +353,29 @@ export default function MergedDataPage() {
             )}
 
             {/* Categories Table (CSV files) */}
-            {categories.length > 0 && (
+            {(categories.length > 0 || browseSearch) && (
                 <div className="bg-white shadow-xl rounded-xl overflow-hidden border border-slate-200">
-                    <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                    <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide flex items-center gap-2">
                             <MdCategory size={16} />
                             Datasets
-                            <span className="text-xs font-normal text-slate-400">({categories.length} categories)</span>
+                            <span className="text-xs font-normal text-slate-400">({pagination?.totalCategories || categories.length} categories)</span>
                         </h2>
+                        <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <form onSubmit={handleBrowseSearch} className="flex gap-2 w-full sm:w-auto">
+                                <input 
+                                    type="text" 
+                                    placeholder="Search datasets..." 
+                                    value={browseSearch}
+                                    onChange={(e) => setBrowseSearch(e.target.value)}
+                                    className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+                                />
+                                <button type="submit" className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-700 transition cursor-pointer">Search</button>
+                                {browseSearch && (
+                                    <button type="button" onClick={() => { setBrowseSearch(''); setBrowsePage(1); fetchBrowse(1, ''); }} className="text-slate-500 px-2 cursor-pointer hover:text-slate-800 text-sm">Clear</button>
+                                )}
+                            </form>
+                        </div>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-slate-600">
@@ -343,7 +427,36 @@ export default function MergedDataPage() {
                                 ))}
                             </tbody>
                         </table>
+                        {categories.length === 0 && browseSearch && (
+                            <div className="p-8 text-center text-slate-400">
+                                <p>No datasets found matching "{browseSearch}"</p>
+                            </div>
+                        )}
                     </div>
+                    {pagination && pagination.totalPages > 1 && (
+                        <div className="p-4 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <span className="text-sm text-slate-600">
+                                Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.totalCategories)} of {pagination.totalCategories} categories
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    disabled={!pagination.hasPrevPage}
+                                    onClick={() => handleBrowsePageChange(pagination.page - 1)}
+                                    className="px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                                >
+                                    Previous
+                                </button>
+                                <span className="text-sm font-medium text-slate-600 min-w-[80px] text-center">Page {pagination.page} of {pagination.totalPages}</span>
+                                <button 
+                                    disabled={!pagination.hasNextPage}
+                                    onClick={() => handleBrowsePageChange(pagination.page + 1)}
+                                    className="px-3 py-1.5 border border-slate-300 rounded-lg bg-white text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -361,32 +474,79 @@ export default function MergedDataPage() {
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[85vh] flex flex-col">
                         <div className="p-5 border-b border-slate-100 flex justify-between items-center">
-                            <h2 className="text-lg font-bold text-slate-800">Preview: {formatCategoryName(previewName)}</h2>
+                            <h2 className="text-lg font-bold text-slate-800">Data Viewer: {formatCategoryName(previewName)}</h2>
                             <button onClick={() => setPreviewOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                                 <MdClose size={24} />
                             </button>
+                        </div>
+                        <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center flex-wrap gap-4">
+                            <form onSubmit={handlePreviewSearch} className="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    placeholder="Search in file..." 
+                                    value={previewSearch}
+                                    onChange={(e) => setPreviewSearch(e.target.value)}
+                                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition cursor-pointer">Search</button>
+                                {previewSearch && (
+                                    <button type="button" onClick={() => { setPreviewSearch(''); setPreviewPage(1); fetchPreviewData(previewName, 1, ''); }} className="text-slate-500 px-2 cursor-pointer hover:text-slate-800">Clear</button>
+                                )}
+                            </form>
+                            
+                            <div className="flex items-center gap-4">
+                                <button 
+                                    onClick={handleExport}
+                                    className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition flex items-center gap-2 font-medium cursor-pointer shadow-sm"
+                                >
+                                    <MdDownload size={18} />
+                                    Export All
+                                </button>
+                                
+                                {previewData?.pagination && (
+                                    <div className="flex items-center gap-4 text-sm text-slate-600">
+                                        <span>Total: {previewData.pagination.total.toLocaleString()} records</span>
+                                        <div className="flex items-center gap-2">
+                                            <button 
+                                                disabled={!previewData.pagination.hasPrevPage}
+                                                onClick={() => handlePreviewPageChange(previewPage - 1)}
+                                                className="px-3 py-1 bg-white border border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition cursor-pointer"
+                                            >
+                                                Prev
+                                            </button>
+                                            <span className="font-medium">Page {previewData.pagination.page} of {previewData.pagination.totalPages || 1}</span>
+                                            <button 
+                                                disabled={!previewData.pagination.hasNextPage}
+                                                onClick={() => handlePreviewPageChange(previewPage + 1)}
+                                                className="px-3 py-1 bg-white border border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition cursor-pointer"
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="flex-1 overflow-auto p-4">
                             {previewLoading ? (
                                 <div className="flex justify-center py-12">
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                                 </div>
-                            ) : previewData ? (
+                            ) : previewData?.data?.length > 0 ? (
                                 <>
-                                    <p className="text-xs text-slate-400 mb-3">Showing first {previewData.rows.length} of {previewData.totalRecords.toLocaleString()} total records</p>
                                     <table className="w-full text-left text-xs text-slate-600">
-                                        <thead className="bg-slate-50 font-bold text-slate-500 sticky top-0">
-                                            <tr className="border-b border-slate-100">
-                                                {previewData.columns.slice(0, 8).map(col => (
-                                                    <th key={col} className="px-3 py-2 whitespace-nowrap">{formatCategoryName(col)}</th>
+                                        <thead className="bg-slate-50 font-bold text-slate-500 sticky top-0 shadow-sm">
+                                            <tr className="border-b border-slate-200">
+                                                {previewData.columns?.map(col => (
+                                                    <th key={col} className="px-3 py-2 whitespace-nowrap bg-slate-50">{formatCategoryName(col)}</th>
                                                 ))}
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {previewData.rows.map((row, i) => (
+                                            {previewData.data.map((row, i) => (
                                                 <tr key={i} className="hover:bg-slate-50">
-                                                    {previewData.columns.slice(0, 8).map(col => (
-                                                        <td key={col} className="px-3 py-2 max-w-[200px] truncate">
+                                                    {previewData.columns?.map(col => (
+                                                        <td key={col} className="px-3 py-2 max-w-[250px] truncate" title={row[col]}>
                                                             {col.toLowerCase().includes('website') && row[col] ? (
                                                                 <a href={row[col]} target="_blank" rel="noopener" className="text-blue-600 hover:underline">{row[col]}</a>
                                                             ) : (
@@ -400,7 +560,7 @@ export default function MergedDataPage() {
                                     </table>
                                 </>
                             ) : (
-                                <p className="text-center text-slate-400 py-12">No preview data available</p>
+                                <p className="text-center text-slate-400 py-12">No data available for this query.</p>
                             )}
                         </div>
                     </div>
