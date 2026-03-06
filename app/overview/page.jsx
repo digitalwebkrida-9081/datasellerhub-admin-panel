@@ -133,12 +133,12 @@ export default function OverviewPage() {
                     icon={<MdCategory className="text-amber-600" size={24} />}
                     color="amber"
                 />
-                <SummaryCard
+                {/* <SummaryCard
                     title="Data Coverage"
                     value={summary.totalRecords > 0 ? `${Math.round((summary.totalEmails / summary.totalRecords) * 100)}% emails` : '0%'}
                     icon={<MdLink className="text-indigo-600" size={24} />}
                     color="indigo"
-                />
+                /> */}
             </div>
 
             {/* Country Breakdown */}

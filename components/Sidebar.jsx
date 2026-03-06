@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { MdDashboard, MdEmail, MdSettings, MdLogout, MdStorage, MdClose, MdViewKanban, MdPublic } from 'react-icons/md';
+import { MdDashboard, MdEmail, MdSettings, MdLogout, MdStorage, MdClose, MdViewKanban, MdPublic, MdShoppingCart } from 'react-icons/md';
 
 export default function Sidebar({ isOpen, onClose }) {
     const pathname = usePathname();
@@ -101,6 +101,15 @@ export default function Sidebar({ isOpen, onClose }) {
 
                 {userRole === 'admin' && (
                     <>
+                        <Link 
+                            href="/orders" 
+                            onClick={onClose}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive('/orders') ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 text-slate-400'}`}
+                        >
+                            <MdShoppingCart size={20} />
+                            <span className="font-medium">Purchase Orders</span>
+                        </Link>
+
                         <Link 
                             href="/b2b-data" 
                             onClick={onClose}
