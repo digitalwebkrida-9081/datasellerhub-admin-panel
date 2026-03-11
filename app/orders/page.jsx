@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
+import PhoneDisplay from '@/components/PhoneDisplay';
 
 export default function OrdersPage() {
     const [orders, setOrders] = useState([]);
@@ -87,7 +88,7 @@ export default function OrdersPage() {
                                         <td className="px-6 py-4">
                                             <div className="font-semibold text-slate-800">{order.name || 'N/A'}</div>
                                             <div className="text-xs text-slate-500">{order.email || 'N/A'}</div>
-                                            <div className="text-xs text-slate-500">{order.phone || ''}</div>
+                                            {order.phone && <PhoneDisplay phone={order.phone} className="mt-1" />}
                                         </td>
                                         <td className="px-6 py-4">
                                             {order.datasetDetails ? (

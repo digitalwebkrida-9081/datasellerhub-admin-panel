@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
 import { MdDelete, MdRefresh, MdSearch, MdFilterList, MdStorage, MdFileDownload, MdContentCopy, MdCheckCircle, MdTimeline, MdTrendingUp, MdChevronLeft, MdChevronRight, MdEdit, MdSave, MdClose } from 'react-icons/md';
 import { FaShoppingCart, FaFileAlt, FaDatabase, FaUsers } from 'react-icons/fa';
+import PhoneDisplay from '@/components/PhoneDisplay';
 
 const LEADS_PER_PAGE = 15;
 const STATUS_OPTIONS = ['new', 'contacted', 'converted', 'closed'];
@@ -463,7 +464,7 @@ export default function AdminLeadsPage() {
                                                                     <span className="text-xs text-slate-500 group-hover/email:text-indigo-600 transition-colors">{lead.email}</span>
                                                                     {copiedEmail === lead.email ? <MdCheckCircle size={12} className="text-emerald-500" /> : <MdContentCopy size={12} className="text-slate-300 opacity-0 group-hover/email:opacity-100 transition-opacity" />}
                                                                 </div>
-                                                                {lead.phone && <span className="text-[11px] text-slate-400">{lead.phone}</span>}
+                                                                {lead.phone && <PhoneDisplay phone={lead.phone} className="mt-0.5" />}
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-4 max-w-xs">
