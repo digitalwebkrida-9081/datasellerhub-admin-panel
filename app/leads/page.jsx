@@ -44,6 +44,7 @@ export default function AdminLeadsPage() {
     const [editingNoteId, setEditingNoteId] = useState(null);
     const [noteText, setNoteText] = useState('');
     const [userRole, setUserRole] = useState('admin');
+    const [expandedMessageId, setExpandedMessageId] = useState(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -478,9 +479,31 @@ export default function AdminLeadsPage() {
                                                                     <span className="text-slate-400 text-xs italic">No dataset info</span>
                                                                 )}
                                                                 {lead.message && (
-                                                                    <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed bg-slate-50/50 p-1.5 rounded-md border border-slate-100/50">
-                                                                        "{lead.message}"
-                                                                    </p>
+                                                                    expandedMessageId === lead._id ? (
+                                                                        <div className="bg-white p-2 border border-indigo-200 shadow-sm rounded-lg relative animate-in zoom-in-95 duration-200 mt-1">
+                                                                            <p className="text-[11px] text-slate-700 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                                                                                {lead.message}
+                                                                            </p>
+                                                                            <div className="flex justify-end mt-2 pt-2 border-t border-slate-100">
+                                                                                <button onClick={() => setExpandedMessageId(null)} className="p-1 px-2 text-slate-500 hover:text-slate-700 rounded bg-slate-50 hover:bg-slate-100 transition flex items-center gap-1 text-[10px] font-medium">
+                                                                                    <MdClose size={12} /> Close
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div 
+                                                                            className="relative group/msg"
+                                                                            onClick={() => setExpandedMessageId(lead._id)}
+                                                                            title="Click to view full message"
+                                                                        >
+                                                                            <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed bg-slate-50/50 hover:bg-indigo-50/50 p-1.5 rounded-md border border-slate-100/50 hover:border-indigo-100/50 transition-colors cursor-pointer pr-5">
+                                                                                "{lead.message}"
+                                                                            </p>
+                                                                            <div className="absolute top-1/2 -translate-y-1/2 right-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity pointer-events-none">
+                                                                                <MdSearch className="text-slate-400" size={12} />
+                                                                            </div>
+                                                                        </div>
+                                                                    )
                                                                 )}
                                                             </div>
                                                         </td>
