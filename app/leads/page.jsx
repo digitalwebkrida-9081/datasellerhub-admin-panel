@@ -466,6 +466,8 @@ export default function AdminLeadsPage() {
                                                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 ring-inset ${
                                                                     lead.source.includes('businessdatalabs') 
                                                                         ? 'bg-purple-50 text-purple-700 ring-purple-700/10'
+                                                                        : lead.source.includes('businessdataguru')
+                                                                        ? 'bg-emerald-50 text-emerald-700 ring-emerald-700/10'
                                                                         : lead.source.includes('datasellerhub')
                                                                         ? 'bg-cyan-50 text-cyan-700 ring-cyan-700/10'
                                                                         : 'bg-slate-50 text-slate-600 ring-slate-600/10'
