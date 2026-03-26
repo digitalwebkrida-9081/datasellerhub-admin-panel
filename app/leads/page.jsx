@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
-import { MdDelete, MdRefresh, MdSearch, MdFilterList, MdStorage, MdFileDownload, MdContentCopy, MdCheckCircle, MdTimeline, MdTrendingUp, MdChevronLeft, MdChevronRight, MdEdit, MdSave, MdClose } from 'react-icons/md';
+import { MdDelete, MdRefresh, MdSearch, MdFilterList, MdStorage, MdFileDownload, MdContentCopy, MdCheckCircle, MdTimeline, MdTrendingUp, MdChevronLeft, MdChevronRight, MdEdit, MdSave, MdClose, MdLanguage } from 'react-icons/md';
 import { FaShoppingCart, FaFileAlt, FaDatabase, FaUsers } from 'react-icons/fa';
 import PhoneDisplay from '@/components/PhoneDisplay';
 
@@ -231,7 +231,8 @@ export default function AdminLeadsPage() {
             const matchesSearch = !searchTerm ||
                 lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                lead.type?.toLowerCase().includes(searchTerm.toLowerCase());
+                lead.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                lead.source?.toLowerCase().includes(searchTerm.toLowerCase());
             return matchesType && matchesSearch;
         });
     }, [leads, activeFilter, searchTerm]);
@@ -260,6 +261,7 @@ export default function AdminLeadsPage() {
                 Email: l.email,
                 Phone: l.phone || '',
                 Status: l.status || 'new',
+                Source: l.source || 'Unknown',
                 Category: category,
                 Location: location,
                 Message: l.message || '',
@@ -405,6 +407,7 @@ export default function AdminLeadsPage() {
                                             </th>
                                             <th className="px-6 py-5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Date & Time</th>
                                             <th className="px-6 py-5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Type</th>
+                                            <th className="px-6 py-5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Source</th>
                                             <th className="px-6 py-5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Lead Details</th>
                                             <th className="px-6 py-5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Inquiry Info</th>
                                             <th className="px-6 py-5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Internal Notes</th>
@@ -415,7 +418,7 @@ export default function AdminLeadsPage() {
                                     <tbody className="divide-y divide-slate-50">
                                         {paginatedLeads.length === 0 ? (
                                             <tr>
-                                                <td colSpan="8" className="px-6 py-16 text-center text-slate-400 bg-slate-50/30">
+                                                <td colSpan="9" className="px-6 py-16 text-center text-slate-400 bg-slate-50/30">
                                                     <div className="flex flex-col items-center justify-center">
                                                         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                                                             <MdFilterList size={30} className="text-slate-300" />
@@ -457,6 +460,22 @@ export default function AdminLeadsPage() {
                                                                     </div>
                                                                 )}
                                                             </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            {lead.source ? (
+                                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 ring-inset ${
+                                                                    lead.source.includes('businessdatalabs') 
+                                                                        ? 'bg-purple-50 text-purple-700 ring-purple-700/10'
+                                                                        : lead.source.includes('datasellerhub')
+                                                                        ? 'bg-cyan-50 text-cyan-700 ring-cyan-700/10'
+                                                                        : 'bg-slate-50 text-slate-600 ring-slate-600/10'
+                                                                }`}>
+                                                                    <MdLanguage size={12} />
+                                                                    {lead.source}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-xs text-slate-400 italic">Unknown</span>
+                                                            )}
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <div className="flex flex-col gap-0.5">
