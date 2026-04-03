@@ -28,7 +28,9 @@ export default function AdminLoginPage() {
 
             if (data.success) {
                 const userRole = data.data.role; // 'admin' or 'sales'
+                const token = data.data.token;
                 localStorage.setItem('admin_auth', 'true');
+                localStorage.setItem('admin_token', token);
                 localStorage.setItem('user_role', userRole);
                 document.cookie = "admin_auth=true; path=/";
                 document.cookie = `user_role=${userRole}; path=/`;

@@ -68,7 +68,10 @@ export default function AdminLeadsPage() {
         setLoading(true);
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-            const res = await fetch(`${API_URL}/api/forms/all`);
+            const token = localStorage.getItem('admin_token');
+            const res = await fetch(`${API_URL}/api/forms/all`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await res.json();
             if (data.success) {
                 setLeads(data.data);
@@ -85,7 +88,11 @@ export default function AdminLeadsPage() {
         setDeletingId(id);
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-            const res = await fetch(`${API_URL}/api/forms/${id}`, { method: 'DELETE' });
+            const token = localStorage.getItem('admin_token');
+            const res = await fetch(`${API_URL}/api/forms/${id}`, { 
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await res.json();
             if (data.success) {
                 setLeads(prev => prev.filter(lead => lead._id !== id));
@@ -103,9 +110,13 @@ export default function AdminLeadsPage() {
         if (!window.confirm(`Delete ${selectedIds.size} selected leads? This cannot be undone.`)) return;
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+            const token = localStorage.getItem('admin_token');
             const res = await fetch(`${API_URL}/api/forms/bulk-delete`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ ids: Array.from(selectedIds) })
             });
             const data = await res.json();
@@ -121,9 +132,13 @@ export default function AdminLeadsPage() {
     const handleStatusChange = async (id, status) => {
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+            const token = localStorage.getItem('admin_token');
             const res = await fetch(`${API_URL}/api/forms/${id}/status`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ status })
             });
             const data = await res.json();
@@ -139,9 +154,13 @@ export default function AdminLeadsPage() {
         if (!editingNoteId) return;
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+            const token = localStorage.getItem('admin_token');
             const res = await fetch(`${API_URL}/api/forms/${editingNoteId}/note`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ note: noteText })
             });
             const data = await res.json();

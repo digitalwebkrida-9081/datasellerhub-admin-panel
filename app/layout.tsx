@@ -15,6 +15,25 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Global Fetch Interceptor for JWT Auth */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          const originalFetch = window.fetch;
+          window.fetch = async function(...args) {
+              let resource = args[0];
+              let config = args[1];
+              if (typeof resource === 'string' && resource.includes('/api/')) {
+                  const token = localStorage.getItem('admin_token');
+                  if (token) {
+                      config = config || {};
+                      config.headers = Object.assign({}, config.headers, {
+                          'Authorization': 'Bearer ' + token
+                      });
+                      args[1] = config;
+                  }
+              }
+              return originalFetch.apply(this, args);
+          };
+        `}} />
         {/* Microsoft Clarity */}
         <Script
           id="microsoft-clarity"
