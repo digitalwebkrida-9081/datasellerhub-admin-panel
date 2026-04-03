@@ -25,10 +25,11 @@ const TYPE_CONFIG = {
 };
 
 const TYPE_FILTERS = [
-    { key: 'all', label: 'All Leads', icon: FaUsers },
+    { key: 'all', label: 'Active Leads', icon: FaUsers },
     { key: 'purchase_attempt', label: 'Purchases', icon: FaShoppingCart },
     { key: 'sample_request', label: 'Samples', icon: FaFileAlt },
     { key: 'custom_database', label: 'Custom DB', icon: FaDatabase },
+    { key: 'closed', label: 'Closed Deals', icon: MdCheckCircle },
 ];
 
 export default function AdminLeadsPage() {
@@ -222,11 +223,12 @@ export default function AdminLeadsPage() {
 
     const stats = useMemo(() => {
         const today = new Date().toDateString();
+        const activeLeads = leads.filter(l => l.status !== 'closed');
         return {
-            total: leads.length,
-            purchases: leads.filter(l => l.type === 'purchase_attempt').length,
-            samples: leads.filter(l => l.type === 'sample_request').length,
-            today: leads.filter(l => new Date(l.createdAt).toDateString() === today).length,
+            total: activeLeads.length,
+            purchases: activeLeads.filter(l => l.type === 'purchase_attempt').length,
+            samples: activeLeads.filter(l => l.type === 'sample_request').length,
+            today: activeLeads.filter(l => new Date(l.createdAt).toDateString() === today).length,
         };
     }, [leads]);
 
@@ -252,7 +254,11 @@ export default function AdminLeadsPage() {
 
     const filteredLeads = useMemo(() => {
         return leads.filter(lead => {
-            const matchesType = activeFilter === 'all' || lead.type === activeFilter;
+            const isClosed = lead.status === 'closed';
+            if (activeFilter === 'closed' && !isClosed) return false;
+            if (activeFilter !== 'closed' && isClosed) return false;
+
+            const matchesType = activeFilter === 'all' || activeFilter === 'closed' || lead.type === activeFilter;
             const matchesSearch = !searchTerm ||
                 lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -394,7 +400,9 @@ export default function AdminLeadsPage() {
                                         {f.label}
                                         {f.key !== 'all' && (
                                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-1 ${activeFilter === f.key ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-200 text-slate-500'}`}>
-                                                {leads.filter(l => l.type === f.key).length}
+                                                {f.key === 'closed' 
+                                                    ? leads.filter(l => l.status === 'closed').length
+                                                    : leads.filter(l => l.type === f.key && l.status !== 'closed').length}
                                             </span>
                                         )}
                                     </button>
