@@ -178,7 +178,7 @@ export default function AdminLeadsPage() {
     const toTitle = (s) => (s || '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
     const parseDatasetInfo = (d) => {
-        if (!d) return { category: '', location: '' };
+        if (!d) return { category: '', location: '', country: '', state: '', city: '' };
         let category = d.category ? toTitle(d.category) : '';
         let location = d.location ? toTitle(d.location) : '';
         if (d.id && d.id.includes('-in-')) {
@@ -186,7 +186,13 @@ export default function AdminLeadsPage() {
             if (!category) category = toTitle(catPart);
             if (!location) location = toTitle(locPart);
         }
-        return { category, location };
+        return { 
+            category, 
+            location,
+            country: d.country ? toTitle(d.country) : '',
+            state: d.state ? toTitle(d.state) : '',
+            city: d.city ? toTitle(d.city) : ''
+        };
     };
 
     const convertedEmails = useMemo(() => {
@@ -253,7 +259,7 @@ export default function AdminLeadsPage() {
 
     const exportCSV = () => {
         const rows = filteredLeads.map(l => {
-            const { category, location } = parseDatasetInfo(l.datasetDetails);
+            const { category, location, country, state, city } = parseDatasetInfo(l.datasetDetails);
             return {
                 Date: new Date(l.createdAt).toLocaleString(),
                 Type: l.type,
@@ -264,6 +270,9 @@ export default function AdminLeadsPage() {
                 Source: l.source || 'Unknown',
                 Category: category,
                 Location: location,
+                Country: country,
+                State: state,
+                City: city,
                 Message: l.message || '',
             };
         });
@@ -430,7 +439,7 @@ export default function AdminLeadsPage() {
                                             </tr>
                                         ) : (
                                             paginatedLeads.map((lead) => {
-                                                const { category, location } = parseDatasetInfo(lead.datasetDetails);
+                                                const { category, location, country, state, city } = parseDatasetInfo(lead.datasetDetails);
                                                 const isConverted = convertedEmails.has(lead.email);
                                                 // Default type config if missing
                                                 const typeConfig = TYPE_CONFIG[lead.type] || { label: lead.type, color: 'text-slate-600', bg: 'bg-slate-100', ring: 'ring-slate-500/10' };
@@ -494,7 +503,13 @@ export default function AdminLeadsPage() {
                                                                 {lead.datasetDetails ? (
                                                                     <div className="flex flex-wrap gap-1.5">
                                                                         {category && <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium border border-slate-200">{category}</span>}
-                                                                        {location && <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium border border-slate-200">📍 {location}</span>}
+                                                                        {(city || state || country) ? (
+                                                                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium border border-slate-200">
+                                                                                📍 {[city, state, country].filter(Boolean).join(', ')}
+                                                                            </span>
+                                                                        ) : location ? (
+                                                                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium border border-slate-200">📍 {location}</span>
+                                                                        ) : null}
                                                                     </div>
                                                                 ) : (
                                                                     <span className="text-slate-400 text-xs italic">No dataset info</span>
@@ -671,7 +686,7 @@ export default function AdminLeadsPage() {
                                 <div className="absolute left-2 top-2 bottom-2 w-px bg-slate-100"></div>
                                 <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                                     {leads.slice(0, 10).map((lead) => {
-                                        const { category, location } = parseDatasetInfo(lead.datasetDetails);
+                                        const { category, location, country, state, city } = parseDatasetInfo(lead.datasetDetails);
                                         const timeAgo = getTimeAgo(lead.createdAt);
                                         const typeColor = lead.type === 'purchase_attempt' ? 'bg-indigo-500' : lead.type === 'sample_request' ? 'bg-emerald-500' : 'bg-violet-500';
                                         
@@ -683,6 +698,7 @@ export default function AdminLeadsPage() {
                                                         <span className="font-bold text-slate-800">{lead.name || 'Anonymous'}</span>
                                                         <span className="text-slate-400"> {lead.type === 'purchase_attempt' ? 'purchased' : lead.type === 'sample_request' ? 'requested sample' : 'inquired about'} </span>
                                                         {category && <span className="font-medium text-indigo-600 bg-indigo-50 px-1.5 rounded text-[10px]">{category}</span>}
+                                                        {(city || state || country) && <span className="text-[9px] text-slate-400 ml-1">in {[city, state, country].filter(Boolean).join(', ')}</span>}
                                                     </p>
                                                     <p className="text-[10px] text-slate-400 mt-1 font-medium">{timeAgo}</p>
                                                 </div>
