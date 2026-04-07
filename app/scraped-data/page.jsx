@@ -6,7 +6,7 @@ import {
     MdRefresh, MdSearch, MdFilterList, MdStorage, MdPublic, MdCategory,
     MdChevronLeft, MdChevronRight, MdVisibility, MdClose, MdExpandMore,
     MdEmail, MdPhone, MdLanguage, MdEdit, MdCheck, MdArrowBack,
-    MdFolder, MdDescription, MdVerified, MdInfoOutline
+    MdFolder, MdDescription, MdVerified, MdInfoOutline, MdHistory
 } from 'react-icons/md';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
@@ -42,6 +42,22 @@ export default function ScrapedDataPage() {
     const [editData, setEditData] = useState({ category: '', price: '', previousPrice: '' });
     const [bulkModalOpen, setBulkModalOpen] = useState(false);
     const [bulkData, setBulkData] = useState({ price: '', previousPrice: '' });
+
+    // Record digits editing
+    const [recordModalOpen, setRecordModalOpen] = useState(false);
+    const [recordData, setRecordData] = useState({
+        category: '',
+        total: '',
+        emails: '',
+        phones: '',
+        websites: '',
+        linkedin: '',
+        facebook: '',
+        instagram: '',
+        twitter: '',
+        tiktok: '',
+        youtube: ''
+    });
 
     // Auth check
     useEffect(() => {
@@ -170,6 +186,93 @@ export default function ScrapedDataPage() {
         } catch (err) {
             console.error('Error saving price:', err);
             alert('Error saving price');
+        }
+    };
+
+    const handleBulkPriceChange = (e) => {
+        setBulkData({ ...bulkData, [e.target.name]: e.target.value });
+    };
+
+    // Record digits management
+    const handleEditRecords = (cat) => {
+        setRecordData({
+            category: cat.name,
+            total: cat.records || '',
+            emails: cat.emails || '',
+            phones: cat.phones || '',
+            websites: cat.websites || '',
+            linkedin: cat.linkedin || '',
+            facebook: cat.facebook || '',
+            instagram: cat.instagram || '',
+            twitter: cat.twitter || '',
+            tiktok: cat.tiktok || '',
+            youtube: cat.youtube || ''
+        });
+        setRecordModalOpen(true);
+    };
+
+    const saveRecords = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/merged/update-records`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    country: selectedCountry,
+                    category: recordData.category,
+                    records: {
+                        total: recordData.total,
+                        emails: recordData.emails,
+                        phones: recordData.phones,
+                        websites: recordData.websites,
+                        linkedin: recordData.linkedin,
+                        facebook: recordData.facebook,
+                        instagram: recordData.instagram,
+                        twitter: recordData.twitter,
+                        tiktok: recordData.tiktok,
+                        youtube: recordData.youtube
+                    }
+                })
+            });
+            const json = await res.json();
+            if (json.success) {
+                setRecordModalOpen(false);
+                // Refresh categories
+                fetch(`${API_URL}/api/merged/categories?country=${selectedCountry}&limit=9999`)
+                    .then(res => res.json())
+                    .then(json => { if (json.success) setCategories(json.data.categories); });
+            } else {
+                alert('Failed: ' + json.message);
+            }
+        } catch (err) {
+            console.error('Error saving records:', err);
+            alert('Error saving records');
+        }
+    };
+
+    const deleteRecords = async () => {
+        if (!confirm('Remove manual override and restore real record counts?')) return;
+        try {
+            const res = await fetch(`${API_URL}/api/merged/delete-records`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    country: selectedCountry,
+                    category: recordData.category
+                })
+            });
+            const json = await res.json();
+            if (json.success) {
+                setRecordModalOpen(false);
+                // Refresh categories
+                fetch(`${API_URL}/api/merged/categories?country=${selectedCountry}&limit=9999`)
+                    .then(res => res.json())
+                    .then(json => { if (json.success) setCategories(json.data.categories); });
+            } else {
+                alert('Failed: ' + json.message);
+            }
+        } catch (err) {
+            console.error('Error deleting records:', err);
+            alert('Error deleting manual records');
         }
     };
 
@@ -440,7 +543,23 @@ export default function ScrapedDataPage() {
                                                             </button>
                                                         </td>
                                                         <td className="px-5 py-3 text-right">
-                                                            <span className="font-bold text-slate-700">{cat.records?.toLocaleString()}</span>
+                                                            <div className="flex flex-col items-end">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className={`font-bold ${cat.hasManualRecords ? 'text-blue-600' : 'text-slate-700'}`}>
+                                                                        {cat.records?.toLocaleString()}
+                                                                    </span>
+                                                                    <button
+                                                                        onClick={() => handleEditRecords(cat)}
+                                                                        className={`p-1 rounded transition ${cat.hasManualRecords ? 'text-blue-600 bg-blue-50' : 'text-slate-300 hover:text-blue-600 hover:bg-blue-50'}`}
+                                                                        title="Edit Record Counts"
+                                                                    >
+                                                                        <MdHistory size={14} />
+                                                                    </button>
+                                                                </div>
+                                                                {cat.hasManualRecords && (
+                                                                    <span className="text-[9px] text-blue-500 font-bold uppercase tracking-tighter">Manual Override</span>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                         <td className="px-5 py-3">
                                                             <div className="flex items-center justify-center gap-1.5 flex-wrap">
@@ -782,7 +901,93 @@ export default function ScrapedDataPage() {
                 setData={setBulkData}
                 onSave={saveBulkPrice}
             />
+            <RecordModal
+                isOpen={recordModalOpen}
+                onClose={() => setRecordModalOpen(false)}
+                title={`Edit Record Counts: ${formatColumnName(recordData.category)}`}
+                data={recordData}
+                setData={setRecordData}
+                onSave={saveRecords}
+                onDelete={deleteRecords}
+            />
         </AdminLayout>
+    );
+}
+
+function RecordModal({ isOpen, onClose, title, data, setData, onSave, onDelete }) {
+    if (!isOpen) return null;
+    const fields = [
+        { id: 'total', label: 'Total Records', icon: <MdStorage size={18} /> },
+        { id: 'emails', label: 'Email Addresses', icon: <MdEmail size={18} /> },
+        { id: 'phones', label: 'Phone Numbers', icon: <MdPhone size={18} /> },
+        { id: 'websites', label: 'Websites (With URLs)', icon: <MdLanguage size={18} /> },
+        { id: 'linkedin', label: 'LinkedIn Profiles', icon: <MdPublic size={18} /> },
+        { id: 'facebook', label: 'Facebook Profiles', icon: <MdPublic size={18} /> },
+        { id: 'instagram', label: 'Instagram Handles', icon: <MdPublic size={18} /> },
+        { id: 'twitter', label: 'X (Twitter) Handles', icon: <MdPublic size={18} /> },
+        { id: 'tiktok', label: 'TikTok Profiles', icon: <MdPublic size={18} /> },
+        { id: 'youtube', label: 'YouTube Channels', icon: <MdPublic size={18} /> },
+    ];
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <h2 className="font-bold text-slate-800 flex items-center gap-2">
+                        <MdHistory className="text-blue-600" size={20} />
+                        {title}
+                    </h2>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition cursor-pointer">
+                        <MdClose size={24} />
+                    </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {fields.map(field => (
+                            <div key={field.id} className="relative">
+                                <label className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">
+                                    {field.icon}
+                                    {field.label}
+                                </label>
+                                <input
+                                    type="number"
+                                    value={data[field.id]}
+                                    onChange={e => setData({ ...data, [field.id]: e.target.value })}
+                                    className="w-full pl-4 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-slate-700 font-semibold"
+                                    placeholder={`Enter ${field.label.toLowerCase()}...`}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <button 
+                        onClick={onDelete}
+                        className="text-red-500 hover:text-red-600 text-sm font-bold flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-red-50 transition cursor-pointer"
+                    >
+                        <MdClose size={18} />
+                        Reset to Real Data
+                    </button>
+                    <div className="flex gap-3 w-full md:w-auto">
+                        <button 
+                            onClick={onClose} 
+                            className="flex-1 md:flex-none px-6 py-2.5 text-slate-600 hover:bg-slate-200 rounded-xl font-bold transition cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={onSave} 
+                            className="flex-1 md:flex-none px-8 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 font-bold transition flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                            <MdCheck size={20} />
+                            Save Records
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }
 
