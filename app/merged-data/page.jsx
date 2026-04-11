@@ -7,6 +7,7 @@ import {
     MdLanguage, MdEdit, MdVisibility, MdClose, MdFolder, 
     MdArrowBack, MdCategory, MdDownload, MdHistory, MdCheck, MdPublic 
 } from 'react-icons/md';
+import { FiGlobe, FiDatabase, FiServer, FiChevronDown } from "react-icons/fi";
 import * as XLSX from 'xlsx';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
@@ -465,22 +466,11 @@ export default function MergedDataPage() {
                             <h2 className="font-bold text-slate-800 uppercase tracking-tight text-sm">Datasets in this level</h2>
                         </div>
                         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                            <div className="flex items-center gap-2 bg-slate-100/50 p-1 rounded-xl border border-slate-100 w-full sm:w-auto">
-                                <span className="text-[9px] font-bold text-slate-400 px-2 uppercase tracking-widest whitespace-nowrap">View Domain:</span>
-                                <select 
-                                    value={activeDomain}
-                                    onChange={(e) => {
-                                        setActiveDomain(e.target.value);
-                                        setBrowsePage(1);
-                                    }}
-                                    className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 w-full sm:w-48"
-                                >
-                                    <option value="">Global (Default)</option>
-                                    <option value="businessdatalabs.com">businessdatalabs.com</option>
-                                    <option value="businessdataguru.com">businessdataguru.com</option>
-                                    <option value="datasellerhub.com">datasellerhub.com</option>
-                                </select>
-                            </div>
+                            <DomainDropdown 
+                                activeDomain={activeDomain} 
+                                setActiveDomain={setActiveDomain} 
+                                setBrowsePage={setBrowsePage} 
+                            />
 
                             <div className="flex items-center gap-2 w-full sm:w-auto">
                                 <div className="relative flex-1 sm:w-64">
@@ -749,6 +739,72 @@ export default function MergedDataPage() {
                 onDelete={deleteRecords}
             />
         </AdminLayout>
+    );
+}
+
+const domains = [
+    { label: "Global (Default)", value: "", icon: FiGlobe },
+    { label: "businessdatalabs.com", value: "businessdatalabs.com", icon: FiDatabase },
+    { label: "businessdataguru.com", value: "businessdataguru.com", icon: FiServer },
+    { label: "datasellerhub.com", value: "datasellerhub.com", icon: FiDatabase },
+];
+
+function DomainDropdown({ activeDomain, setActiveDomain, setBrowsePage }) {
+    const [open, setOpen] = useState(false);
+
+    const selected = domains.find(d => d.value === activeDomain);
+
+    return (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm w-full sm:w-auto relative mb-2 sm:mb-0">
+
+            {/* Label */}
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap px-1">
+                View Domain
+            </span>
+
+            {/* Trigger */}
+            <button
+                onClick={() => setOpen(!open)}
+                className="w-full sm:w-56 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[12px] font-bold text-left text-slate-700 
+                hover:border-blue-300 hover:bg-white transition-all flex justify-between items-center cursor-pointer"
+            >
+                <div className="flex items-center gap-2">
+                    {selected?.icon && <selected.icon className="text-blue-500 text-sm" />}
+                    {selected?.label}
+                </div>
+                <FiChevronDown className={`text-slate-400 text-sm transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown */}
+            {open && (
+                <div className="absolute top-full left-0 sm:right-0 sm:left-auto mt-2 w-full sm:w-64 bg-white border border-slate-100 rounded-xl shadow-xl p-2 z-[110] animate-in fade-in zoom-in duration-200">
+                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 py-1 mb-1 border-b border-slate-50">Select Pricing Context</div>
+                    {domains.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <div
+                                key={item.value}
+                                onClick={() => {
+                                    setActiveDomain(item.value);
+                                    setBrowsePage(1);
+                                    setOpen(false);
+                                }}
+                                className={`flex items-center gap-3 px-3 py-2.5 text-[12px] font-bold rounded-lg cursor-pointer transition-all mb-1 last:mb-0
+                                
+                                ${activeDomain === item.value
+                                    ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                                    : "text-slate-600 hover:bg-blue-50 hover:text-blue-600"}
+                                `}
+                            >
+                                <Icon className={`text-sm ${activeDomain === item.value ? "text-white" : "text-blue-500"}`} />
+                                {item.label}
+                                {activeDomain === item.value && <MdCheck className="ml-auto text-white" size={14} />}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
     );
 }
 
