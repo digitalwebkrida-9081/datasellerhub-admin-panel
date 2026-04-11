@@ -22,6 +22,7 @@ export default function MergedDataPage() {
     const [city, setCity] = useState('');
     const [browsePage, setBrowsePage] = useState(1);
     const [browseSearch, setBrowseSearch] = useState('');
+    const [activeDomain, setActiveDomain] = useState('');
     
     // Preview modal
     const [previewOpen, setPreviewOpen] = useState(false);
@@ -66,7 +67,7 @@ export default function MergedDataPage() {
     useEffect(() => {
         fetchBrowse();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [country, state, city]);
+    }, [country, state, city, activeDomain]);
 
     const fetchBrowse = async (page = browsePage, search = browseSearch) => {
         setLoading(true);
@@ -78,6 +79,7 @@ export default function MergedDataPage() {
             params.append('page', page);
             params.append('limit', 50);
             if (search) params.append('search', search);
+            if (activeDomain) params.append('domain', activeDomain);
             
             const res = await fetch(`${API_URL}/api/merged/browse?${params}`);
             const json = await res.json();
@@ -460,22 +462,41 @@ export default function MergedDataPage() {
                             <div className="p-2 bg-slate-100 rounded-lg text-slate-600">
                                 <MdCategory size={20} />
                             </div>
-                            <h2 className="font-bold text-slate-800">Datasets in this level</h2>
+                            <h2 className="font-bold text-slate-800 uppercase tracking-tight text-sm">Datasets in this level</h2>
                         </div>
-                        <div className="flex items-center gap-2 w-full md:w-auto">
-                            <div className="relative flex-1 md:w-64">
-                                <input 
-                                    type="text" 
-                                    placeholder="Filter by name..." 
-                                    value={browseSearch}
-                                    onChange={(e) => setBrowseSearch(e.target.value)}
-                                    className="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
-                                />
+                        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                            <div className="flex items-center gap-2 bg-slate-100/50 p-1 rounded-xl border border-slate-100 w-full sm:w-auto">
+                                <span className="text-[9px] font-bold text-slate-400 px-2 uppercase tracking-widest whitespace-nowrap">View Domain:</span>
+                                <select 
+                                    value={activeDomain}
+                                    onChange={(e) => {
+                                        setActiveDomain(e.target.value);
+                                        setBrowsePage(1);
+                                    }}
+                                    className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 w-full sm:w-48"
+                                >
+                                    <option value="">Global (Default)</option>
+                                    <option value="businessdatalabs.com">businessdatalabs.com</option>
+                                    <option value="businessdataguru.com">businessdataguru.com</option>
+                                    <option value="datasellerhub.com">datasellerhub.com</option>
+                                </select>
                             </div>
-                            <button onClick={handleBrowseSearch} className="bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-black transition cursor-pointer">Filter</button>
-                            {browseSearch && (
-                                <button onClick={() => { setBrowseSearch(''); setBrowsePage(1); fetchBrowse(1, ''); }} className="text-slate-400 hover:text-slate-600 transition text-xs font-bold px-2 cursor-pointer">Clear</button>
-                            )}
+
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <div className="relative flex-1 sm:w-64">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Filter by name..." 
+                                        value={browseSearch}
+                                        onChange={(e) => setBrowseSearch(e.target.value)}
+                                        className="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition"
+                                    />
+                                </div>
+                                <button onClick={handleBrowseSearch} className="bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-black transition cursor-pointer shadow-sm active:scale-95 whitespace-nowrap">Filter</button>
+                                {browseSearch && (
+                                    <button onClick={() => { setBrowseSearch(''); setBrowsePage(1); fetchBrowse(1, ''); }} className="text-slate-400 hover:text-red-500 transition text-[10px] font-bold px-1 cursor-pointer uppercase">Clear</button>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className="overflow-x-auto">
