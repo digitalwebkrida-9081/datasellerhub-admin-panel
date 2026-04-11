@@ -33,7 +33,7 @@ export default function MergedDataPage() {
     
     // Price edit modal
     const [editModalOpen, setEditModalOpen] = useState(false);
-    const [editData, setEditData] = useState({ category: '', price: '', previousPrice: '' });
+    const [editData, setEditData] = useState({ category: '', price: '', previousPrice: '', domain: '' });
     
     const [bulkModalOpen, setBulkModalOpen] = useState(false);
     const [bulkData, setBulkData] = useState({ price: '', previousPrice: '' });
@@ -206,7 +206,8 @@ export default function MergedDataPage() {
         setEditData({
             category: cat.name,
             price: cat.price ? cat.price.replace('$', '') : '',
-            previousPrice: cat.previousPrice ? cat.previousPrice.replace('$', '') : ''
+            previousPrice: cat.previousPrice ? cat.previousPrice.replace('$', '') : '',
+            domain: '' 
         });
         setEditModalOpen(true);
     };
@@ -222,7 +223,8 @@ export default function MergedDataPage() {
                     state: state || undefined,
                     city: city || undefined,
                     price: `$${editData.price}`,
-                    previousPrice: editData.previousPrice ? `$${editData.previousPrice}` : undefined
+                    previousPrice: editData.previousPrice ? `$${editData.previousPrice}` : undefined,
+                    domain: editData.domain || undefined
                 })
             });
             const json = await res.json();
@@ -753,6 +755,20 @@ function PriceModal({ isOpen, onClose, title, data, setData, onSave }) {
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition"><MdClose size={20} /></button>
                 </div>
                 <div className="space-y-4">
+                    <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Domain Scope</label>
+                        <select
+                            value={data.domain}
+                            onChange={e => setData({ ...data, domain: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition font-bold text-sm"
+                        >
+                            <option value="">Global (All Domains)</option>
+                            <option value="businessdatalabs.com">businessdatalabs.com</option>
+                            <option value="businessdataguru.com">businessdataguru.com</option>
+                            <option value="datascrapperhub.com">datascrapperhub.com</option>
+                            <option value="datasellerhub.com">datasellerhub.com</option>
+                        </select>
+                    </div>
                     <div className="space-y-1.5">
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Current Price ($)</label>
                         <input
