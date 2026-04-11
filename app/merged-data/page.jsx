@@ -702,6 +702,9 @@ export default function MergedDataPage() {
                 data={editData}
                 setData={setEditData}
                 onSave={savePrice}
+                country={country}
+                state={state}
+                city={city}
             />
 
             {/* Bulk Pricing Modal */}
@@ -742,7 +745,38 @@ function MiniStat({ icon, label, value, color, bgColor }) {
     );
 }
 
-function PriceModal({ isOpen, onClose, title, data, setData, onSave }) {
+function PriceModal({ isOpen, onClose, title, data, setData, onSave, country, state, city }) {
+    const [fetching, setFetching] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen || !data.category) return;
+        
+        const fetchDomainPrice = async () => {
+            setFetching(true);
+            try {
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://stagservice.datasellerhub.com";
+                const url = `${API_URL}/api/merged/price-details?country=${country}&category=${data.category}&domain=${data.domain}${state ? `&state=${state}` : ''}${city ? `&city=${city}` : ''}`;
+                
+                const res = await fetch(url);
+                const result = await res.json();
+                
+                if (result.success && result.data) {
+                    setData(prev => ({
+                        ...prev,
+                        price: result.data.price ? result.data.price.replace('$', '') : '',
+                        previousPrice: result.data.previousPrice ? result.data.previousPrice.replace('$', '') : ''
+                    }));
+                }
+            } catch (err) {
+                console.error("Failed to fetch domain price:", err);
+            } finally {
+                setFetching(false);
+            }
+        };
+
+        fetchDomainPrice();
+    }, [data.domain, isOpen, data.category, country, state, city]);
+
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 bg-slate-900/30 z-[110] flex items-center justify-center p-4 backdrop-blur-sm">
@@ -765,7 +799,6 @@ function PriceModal({ isOpen, onClose, title, data, setData, onSave }) {
                             <option value="">Global (All Domains)</option>
                             <option value="businessdatalabs.com">businessdatalabs.com</option>
                             <option value="businessdataguru.com">businessdataguru.com</option>
-                            <option value="datascrapperhub.com">datascrapperhub.com</option>
                             <option value="datasellerhub.com">datasellerhub.com</option>
                         </select>
                     </div>
@@ -775,8 +808,9 @@ function PriceModal({ isOpen, onClose, title, data, setData, onSave }) {
                             type="number"
                             value={data.price}
                             onChange={e => setData({ ...data, price: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition font-bold"
+                            className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition font-bold ${fetching ? 'opacity-50' : ''}`}
                             placeholder="0.00"
+                            disabled={fetching}
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -785,8 +819,9 @@ function PriceModal({ isOpen, onClose, title, data, setData, onSave }) {
                             type="number"
                             value={data.previousPrice}
                             onChange={e => setData({ ...data, previousPrice: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-100 font-bold text-slate-400"
+                            className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-100 font-bold text-slate-400 ${fetching ? 'opacity-50' : ''}`}
                             placeholder="Optional"
+                            disabled={fetching}
                         />
                     </div>
                 </div>
