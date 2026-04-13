@@ -341,7 +341,8 @@ export default function MergedDataPage() {
                     state: state || undefined,
                     city: city || undefined,
                     price: `$${bulkData.price}`,
-                    previousPrice: bulkData.previousPrice ? `$${bulkData.previousPrice}` : undefined
+                    previousPrice: bulkData.previousPrice ? `$${bulkData.previousPrice}` : undefined,
+                    domain: activeDomain || undefined
                 })
             });
             const json = await res.json();
